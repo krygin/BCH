@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Stack;
+import java.util.*;
 
 /**
  * Created by Ivan on 25.05.2014 in 0:52.
@@ -13,7 +10,7 @@ public class FieldElement {
     private int [] polynomial;
     private int degree;
     private int order;
-    private int[][] minPolynomials;
+    private Map<Integer, int[]> minPolynomials;
     private boolean isPrimitive;
 
     public FieldElement (int number, int p, int n) {
@@ -21,6 +18,7 @@ public class FieldElement {
         this.p = p;
         this.n = n;
         this.polynomial = numberToPolynomial(number);
+        this.minPolynomials = new HashMap<>();
     }
     public int getNumber() {
         return number;
@@ -55,15 +53,9 @@ public class FieldElement {
         this.degree = degree;
     }
 
-    public int[][] getMinPolynomials() {
+    public Map<Integer, int[]> getMinPolynomials() {
         return minPolynomials;
     }
-
-    public void setMinPolynomials(int[][] minPolynomials) {
-        this.minPolynomials = minPolynomials;
-    }
-
-
 
     private int[] numberToPolynomial(int number) {
         int [] result = new int[n];

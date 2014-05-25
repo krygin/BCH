@@ -1,4 +1,5 @@
-import java.util.Stack;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Ivan on 24.05.2014 in 22:41.
@@ -8,12 +9,16 @@ public class Field {
     private int n;
     private FieldElement[] fieldElements;
     private int[] polynomial;
+    private int cardinality;
+    private Map<Integer, Integer> degreeToNumber;
 
     public Field(int p, int n, int[] polynomial) {
         this.p = p;
         this.n = n;
         this.polynomial = polynomial;
+        this.cardinality = (int) Math.pow(p,n);
         fieldElements = new FieldElement[(int) Math.pow(p, n)];
+        degreeToNumber = new HashMap<>();
     }
 
     public void init () {
@@ -21,8 +26,22 @@ public class Field {
             fieldElements[i] = new FieldElement(i, p, n);
             fieldElements[i].setOrder(countOrder(fieldElements[i]));
         }
+        degreeToNumber.put(0, 1);
+        fieldElements[0].setDegree(-1);
+        fieldElements[1].setDegree(0);
+        for (int i = 2; i < fieldElements.length; i++) {
+            if (fieldElements[i].getOrder() == cardinality-1) {
+                degreeToNumber.put(1, i);
+                fieldElements[i].setDegree(i);
+                break;
+            }
+        }
+        for (int i = 2; i < cardinality - 1; i++) {
+            int number = getNumberByPolynomial(pow(fieldElements[degreeToNumber.get(1)], i));
+            degreeToNumber.put(i, number);
+            fieldElements[number].setDegree(i);
+        }
     }
-
     private int countOrder(FieldElement fieldElement) {
         int[] polynomial = fieldElement.getPolynomial();
         int[] result = polynomial.clone();
@@ -59,7 +78,7 @@ public class Field {
 
         for (int i = 0; i < polynomial1.length; i++) {
             for (int j = 0; j < polynomial2.length; j++) {
-                result[i + j] = add(result[i+j],multiply(polynomial1[i], polynomial2[j]));
+                result[i + j] = add(result[i + j], multiply(polynomial1[i], polynomial2[j]));
             }
         }
         return result;
@@ -125,7 +144,45 @@ public class Field {
             return (minuend - subtrahend) % p;
     }
 
+    private int [] pow(FieldElement element, int degree) {
+        int [] polynomial = element.getPolynomial();
+        int [] temp = element.getPolynomial();
+        for (int i = 1; i < degree; i++) {
+            temp = modulo(multiply(temp, polynomial), this.polynomial);
+        }
+        return temp;
+    }
+
     private int add(int number1, int number2) {
         return (number1+number2)%p;
+    }
+
+    private int getNumberByPolynomial(int [] vector) {
+        for (int i = 0; i < fieldElements.length; i++) {
+            if (polynomialsAreEquals(fieldElements[i].getPolynomial(), vector)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private boolean polynomialsAreEquals(int[] polynomial1, int[] polynomial2) {
+        int length;
+        if (polynomial1.length < polynomial2.length) {
+            length = polynomial1.length;
+            for (int i = polynomial2.length - 1; i >= polynomial.length; i--)
+                if (polynomial2[i] != 0)
+                    return false;
+        } else {
+            length = polynomial2.length;
+            for (int i = polynomial1.length - 1; i >= polynomial2.length; i--)
+                if (polynomial1[i] != 0)
+                    return false;
+        }
+        for (int i = 0; i < length; i++) {
+            if (polynomial1[i] != polynomial2[i])
+                return false;
+        }
+        return true;
     }
 }
