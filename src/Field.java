@@ -1,4 +1,6 @@
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -11,6 +13,7 @@ public class Field {
     private int[] polynomial;
     private int cardinality;
     private Map<Integer, Integer> degreeToNumber;
+    private List<Integer> extentionDegrees;
 
     public Field(int p, int n, int[] polynomial) {
         this.p = p;
@@ -19,6 +22,7 @@ public class Field {
         this.cardinality = (int) Math.pow(p,n);
         fieldElements = new FieldElement[(int) Math.pow(p, n)];
         degreeToNumber = new HashMap<>();
+        extentionDegrees = new ArrayList<>();
     }
 
     public void init () {
@@ -32,7 +36,7 @@ public class Field {
         for (int i = 2; i < fieldElements.length; i++) {
             if (fieldElements[i].getOrder() == cardinality-1) {
                 degreeToNumber.put(1, i);
-                fieldElements[i].setDegree(i);
+                fieldElements[i].setDegree(1);
                 break;
             }
         }
@@ -41,6 +45,18 @@ public class Field {
             degreeToNumber.put(i, number);
             fieldElements[number].setDegree(i);
         }
+
+
+        for (int i = 1; i <= n; i++) {
+            if (n%i == 0)
+                extentionDegrees.add(i);
+        }
+
+        for (int i = 0; i < fieldElements.length; i++) {
+            countMinPolynomials(fieldElements[i]);
+        }
+
+
     }
     private int countOrder(FieldElement fieldElement) {
         int[] polynomial = fieldElement.getPolynomial();
@@ -184,5 +200,85 @@ public class Field {
                 return false;
         }
         return true;
+    }
+
+    private  FieldElement multiply(FieldElement element1, FieldElement element2) {
+        if (isZero(element1.getPolynomial()) || isZero(element2.getPolynomial()))
+            return fieldElements[0];
+        int resultDegree = (element1.getDegree()+element2.getDegree())%(cardinality-1);
+        return fieldElements[degreeToNumber.get(resultDegree)];
+    }
+
+    private FieldElement add(FieldElement element1, FieldElement element2) {
+        int[] result = add(element1.getPolynomial(), element2.getPolynomial());
+        return fieldElements[getNumberByPolynomial(result)];
+    }
+
+    private int[] add(int[] polynomial1, int[] polynomial2) {
+        int [] result = new int[Math.max(polynomial1.length, polynomial2.length)];
+        int length;
+        if (polynomial1.length < polynomial2.length) {
+            length = polynomial1.length;
+        } else {
+            length = polynomial2.length;
+        }
+        for (int i = 0; i < length; i++) {
+            result[i] = add(polynomial1[i], polynomial2[i]);
+        }
+        return result;
+    }
+
+    private FieldElement getAdditiveInverse(FieldElement element) {
+        int[] result = element.getPolynomial();
+        for (int i = 0; i<result.length; i++)
+            subtract(result[i], p);
+        int resultNumber = getNumberByPolynomial(result);
+        return fieldElements[resultNumber];
+    }
+
+
+    private FieldElement[] multiply(FieldElement[] polynomial1, FieldElement[] polynomial2) {
+        FieldElement[] result = new FieldElement[polynomial1.length + polynomial2.length - 1];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = fieldElements[0];
+        }
+        for (int i = 0; i < polynomial1.length; i++) {
+            for (int j = 0; j < polynomial2.length; j++) {
+                result[i + j] = add(result[i + j], multiply(polynomial1[i], polynomial2[j]));
+            }
+        }
+        return result;
+    }
+
+    private void countMinPolynomials(FieldElement element) {
+        if (element.getMinPolynomials().size() != 0)
+            return;
+        FieldElement[] result;
+        Map<Integer, FieldElement[]> resultMap = new HashMap<>();
+        for (int degree:extentionDegrees) {
+            result = multiplyAll(getConjugateElements(element,degree));
+            resultMap.put(degree,result);
+        }
+        element.setMinPolynomials(resultMap);
+    }
+
+    public FieldElement[] multiplyAll(List<FieldElement> elements) {
+        FieldElement [] result = new FieldElement[]{fieldElements[1]};
+        for (FieldElement element: elements) {
+            result = multiply(result, new FieldElement[]{getAdditiveInverse(element), fieldElements[1]});
+        }
+        return result;
+    }
+
+    private List<FieldElement> getConjugateElements(FieldElement element, int extentionDegree) {
+        List<FieldElement> elements = new ArrayList<>();
+        elements.add(element);
+        if (isZero(element.getPolynomial()))
+            return elements;
+        FieldElement temp = element;
+        while ((temp = fieldElements[degreeToNumber.get((temp.getDegree()*(int)Math.pow(p,extentionDegree))%(cardinality-1))]).getNumber() != element.getNumber()){
+            elements.add(temp);
+        }
+        return elements;
     }
 }

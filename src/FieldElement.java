@@ -10,7 +10,7 @@ public class FieldElement {
     private int [] polynomial;
     private int degree;
     private int order;
-    private Map<Integer, int[]> minPolynomials;
+    private Map<Integer, FieldElement[]> minPolynomials;
     private boolean isPrimitive;
 
     public FieldElement (int number, int p, int n) {
@@ -30,6 +30,10 @@ public class FieldElement {
 
     public int[] getPolynomial() {
         return polynomial;
+    }
+
+    public void setMinPolynomials(Map<Integer, FieldElement[]> minPolynomials) {
+        this.minPolynomials = minPolynomials;
     }
 
     public void setPolynomial(int[] polynomial) {
@@ -53,7 +57,7 @@ public class FieldElement {
         this.degree = degree;
     }
 
-    public Map<Integer, int[]> getMinPolynomials() {
+    public Map<Integer, FieldElement[]> getMinPolynomials() {
         return minPolynomials;
     }
 
